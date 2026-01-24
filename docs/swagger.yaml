@@ -1,0 +1,101 @@
+basePath: /
+definitions:
+  cmd_api.Payment:
+    properties:
+      amount:
+        description: |-
+          Amount — сумма платежа
+          float64 = число с плавающей точкой, 64 бита точности
+          Для денег в продакшене лучше использовать int64 (копейки/центы)
+          Причина: float64 имеет ошибки округления (0.1 + 0.2 ≠ 0.3)
+          Пример: вместо 100.50 RUB хранить 10050 копеек
+        type: number
+      currency:
+        description: |-
+          Currency — код валюты
+          Формат: ISO 4217 (USD, EUR, RUB, GBP и т.д.)
+          3 буквы, всегда в верхнем регистре
+        type: string
+      description:
+        type: string
+      id:
+        description: |-
+          ID — уникальный идентификатор платежа
+          string = текстовая строка (как str в Python)
+          `json:"id"` = JSON тег, указывает:
+            - При конвертации в JSON это поле будет называться "id" (маленькими)
+            - При парсинге JSON ключ "id" попадет в это поле
+          ВАЖНО: ID с большой буквы = публичное поле (видно из других пакетов)
+                  id с маленькой = приватное (только внутри этого пакета)
+        type: string
+      status:
+        description: |-
+          Status — статус платежа
+          Возможные значения: "pending", "succeeded", "failed"
+          В продакшене лучше использовать enum (константы)
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@example.com
+    name: API Support
+    url: http://github.com/namestnikoff/payment-system
+  description: |-
+    Поддерживает создание платежей, проверку статусов
+    и интеграцию с платежными шлюзами
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Payment System API
+  version: "1.0"
+paths:
+  /payments:
+    post:
+      consumes:
+      - application/json
+      description: Создает новый платеж в системе с валидацией суммы и валюты
+      parameters:
+      - description: Данные платежа
+        in: body
+        name: payment
+        required: true
+        schema:
+          $ref: '#/definitions/cmd_api.Payment'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/cmd_api.Payment'
+        "400":
+          description: Invalid JSON или неверные данные
+          schema:
+            type: string
+        "405":
+          description: Method not allowed
+          schema:
+            type: string
+      summary: Создать платеж
+      tags:
+      - payments
+  /payments/status:
+    get:
+      description: Возвращает информацию о статусе платежа
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/cmd_api.Payment'
+        "405":
+          description: Method not allowed
+          schema:
+            type: string
+      summary: Получить статус платежа
+      tags:
+      - payments
+swagger: "2.0"

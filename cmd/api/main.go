@@ -4,6 +4,42 @@
 // Если бы написали package mylib — это была бы библиотека, а не программа
 package main
 
+// ===== АННОТАЦИИ SWAGGER =====
+// Эти комментарии используются swag для генерации OpenAPI спецификации
+// Формат: // @ключ значение
+
+// @title           Payment System API
+// Название API, будет отображаться в Swagger UI
+// Например: "Payment System API"
+
+// @version         1.0
+// Версия API (можно использовать семантическое версионирование)
+
+// @description     API для управления платежами
+// Описание API, поддерживает многострочный текст
+// @description     Поддерживает создание платежей, проверку статусов
+// @description     и интеграцию с платежными шлюзами
+
+// @termsOfService  http://swagger.io/terms/
+// URL условий использования API (необязательно)
+
+// @contact.name   API Support
+// @contact.url    http://github.com/namestnikoff/payment-system
+// @contact.email  support@example.com
+// Контактная информация для поддержки API
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+// Лицензия проекта
+
+// @host      localhost:8080
+// Адрес сервера (без http://)
+// В продакшене: api.payment-system.com
+
+// @BasePath  /
+// Базовый путь для всех API endpoints
+// Например: /api/v1 или просто /
+
 // ===== ИМПОРТЫ =====
 // import группирует все подключаемые библиотеки
 // Скобки () позволяют импортировать несколько пакетов сразу
@@ -30,6 +66,9 @@ import (
 	// Marshal = Go struct → JSON (сериализация)
 	// Unmarshal = JSON → Go struct (десериализация)
 	"encoding/json"
+
+	_ "github.com/namestnikoff/payment-system/docs"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // ===== СТРУКТУРЫ ДАННЫХ =====
@@ -90,6 +129,17 @@ type Payment struct {
 // В Go данные передаются ПО ЗНАЧЕНИЮ (копируются)
 // Звездочка * означает "передать ссылку, а не копию"
 // Зачем: http.Request большой объект, копировать его дорого
+// CreatePayment создает новый платеж
+// @Summary      Создать платеж
+// @Description  Создает новый платеж в системе с валидацией суммы и валюты
+// @Tags         payments
+// @Accept       json
+// @Produce      json
+// @Param        payment  body      Payment  true  "Данные платежа"
+// @Success      201  {object}  Payment
+// @Failure      400  {string}  string  "Invalid JSON или неверные данные"
+// @Failure      405  {string}  string  "Method not allowed"
+// @Router       /payments [post]
 func handleCreatePayment(w http.ResponseWriter, r *http.Request) {
 	// Проверяем HTTP метод
 	// r.Method = строка с методом запроса ("GET", "POST", "PUT" и т.д.)
@@ -229,6 +279,14 @@ func handleCreatePayment(w http.ResponseWriter, r *http.Request) {
 // handleGetPayment обрабатывает GET запрос для получения статуса платежа
 // В реальности здесь был бы ID в URL (например: GET /payments/pay_12345)
 // Пока возвращаем заглушку (mock data)
+// GetPaymentStatus получает статус платежа
+// @Summary      Получить статус платежа
+// @Description  Возвращает информацию о статусе платежа
+// @Tags         payments
+// @Produce      json
+// @Success      200  {object}  Payment
+// @Failure      405  {string}  string  "Method not allowed"
+// @Router       /payments/status [get]
 func handleGetPayment(w http.ResponseWriter, r *http.Request) {
 	// Проверяем что это GET запрос
 	if r.Method != http.MethodGet {
@@ -295,7 +353,14 @@ func main() {
 	//
 	// ВОЗВРАЩАЕТ ERROR:
 	// Если сервер не смог запуститься (порт занят и т.д.)
+
+	// Swagger UI будет доступен по адресу http://localhost:8080/swagger/
+	// httpSwagger.WrapHandler = функция которая создает HTTP обработчик для Swagger UI
+	// Она читает спецификацию (которую мы сгенерируем командой swag init)
+	// и отображает интерактивную документацию в браузере
+	http.HandleFunc("/swagger/", httpSwagger.WrapHandler)
 	log.Println("Server is running on http://localhost:8080")
+	log.Println("Swagger UI: http://localhost:8080/swagger/index.html")
 	err := http.ListenAndServe(":8080", nil)
 
 	// Если мы здесь — значит сервер упал
